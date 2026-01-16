@@ -1,0 +1,49 @@
+###################################################
+##                                               ##
+##             Inspector Messages                ##
+##              Developed by Ome_R               ##
+##                                               ##
+###################################################
+
+# Called when fails to follow a command's format usage.
+COMMAND_USAGE: |-
+  <red>Too few arguments. <yellow>Use like this:
+  <aqua>/{0} <dark_aqua>{1}
+
+# Called when trying to insect a block in cooldown time.
+COOLDOWN: '<dark_aqua>Inspector <white>- Please wait {0} seconds.'
+
+# Called when toggling on/off the inspector mode.
+INSPECTOR_ON: '<dark_aqua>Inspector <white>- Inspector now enabled.'
+INSPECTOR_OFF: '<dark_aqua>Inspector <white>- Inspector now disabled.'
+
+# Called when inspecting data on a block.
+INSPECT_DATA_HEADER: '<white>----- <dark_aqua>Inspector <white>----- <gray>(x{0}/y{1}/z{2})'
+INSPECT_DATA_ROW: '<gray>{0} <white>- <dark_aqua>{1} <white>{2} <dark_aqua>{3}<white>.'
+INSPECT_DATA_FOOTER: |-
+  <white>-----
+  <white>Page {0}/{1}. View older data by typing "<dark_aqua>/inspect <page><white>".
+
+# Called when using the inspect command and lacking the permission.
+NO_PERMISSION: '<white>Unknown command. Type "/help" for help.'
+
+# Called when trying to inspect a block not inside a claim.
+NOT_INSIDE_CLAIM: '<dark_aqua>Inspector <white>- You must be inside a region or claim that you are added to.'
+
+# Called when couldn't find block data.
+LIMIT_REACH: '<dark_aqua>Inspector <white>- No block data found for that page.'
+NO_BLOCK_DATA: '<dark_aqua>Inspector <white>- No block data found at this location.'
+NO_BLOCK_INTERACTIONS: '<dark_aqua>Inspector <white>- No block interactions found at this location.'
+NO_CONTAINER_TRANSACTIONS: '<dark_aqua>Inspector <white>- No container transactions found at this location.'
+
+# Called when player tried to inspect block's page without selecting one.
+NO_BLOCK_SELECTED: '<dark_aqua>Inspector <white>- Select a block using "{0}" first.'
+
+# Called when a player successfully reloaded all configuration files.
+RELOAD_SUCCESS: '<yellow>Successfully reloaded configuration files.'
+
+# Called when a player doesn't have the required role.
+REQUIRED_ROLE: '<red>You must be a {0} to enable inspect mode.'
+
+# Called when a player doesn't specify a page.
+SPECIFY_PAGE: '<dark_aqua>Inspector <white>- Please specify a page.'

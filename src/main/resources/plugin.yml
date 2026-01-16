@@ -1,0 +1,22 @@
+name: Inspector
+version: ${project.version}
+main: com.minecraftcitiesnetwork.inspector.InspectorPlugin
+
+description: Inspect block changes, chest transactions and more!
+website: https://bg-software.com/
+api-version: 1.21
+author: Ome_R
+
+depend:
+  - CoreProtect
+  - GriefPrevention
+  - WorldGuard
+
+commands:
+  inspect:
+    description: Toggle inspect mode or view block history
+
+permissions:
+  inspector.use:
+    description: Allows players to use the inspect command and inspect blocks
+    default: op

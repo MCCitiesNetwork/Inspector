@@ -1,0 +1,93 @@
+plugins {
+    id 'java'
+    id 'io.github.goooler.shadow' version '8.1.8'
+    id 'maven-publish'
+}
+
+group 'Inspector'
+version = "1.0.0"
+
+project.ext {
+    archiveFolder = file("archive/")
+    targetFolder = file("target/")
+    buildVersion = System.getenv("BUILD_NUMBER") == null || Boolean.parseBoolean(System.getenv("STABLE_BUILD")) ?
+            version : version + "-b" + System.getenv("BUILD_NUMBER")
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+task checkDebug() {
+    Set<File> filesWithDebug = fileTree('src/main/java').filter { file ->
+        file.text.contains('Bukkit.broadcastMessage')
+    }.getFiles()
+
+    if (!filesWithDebug.isEmpty())
+        throw new GradleException("Found debug messages: " + filesWithDebug)
+}
+
+build {
+    dependsOn checkDebug
+    dependsOn shadowJar
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven {
+        name = "enginehub"
+        url = "https://maven.enginehub.org/repo/"
+    }
+    maven {
+        name = "playpro"
+        url = "https://maven.playpro.com/"
+    }
+    maven {
+        name = "jitpack"
+        url = "https://jitpack.io"
+    }
+}
+
+dependencies {
+    implementation 'org.spongepowered:configurate-yaml:4.2.0'
+
+    compileOnly "io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT"
+    
+    compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.14'
+    
+    compileOnly 'net.coreprotect:coreprotect:22.4'
+    
+    compileOnly 'com.github.GriefPrevention:GriefPrevention:16.18.2'
+}
+
+processResources {
+    outputs.upToDateWhen {false}
+    eachFile { details ->
+        if (details.name.contentEquals('plugin.yml')) {
+            filter { String line ->
+                line.replace('${project.version}', rootProject.buildVersion)
+            }
+        }
+    }
+}
+
+shadowJar {
+    dependsOn(jar)
+
+    relocate 'org.spongepowered.configurate', 'com.minecraftcitiesnetwork.inspector.libs.org.spongepowered.configurate'
+
+    archiveFileName = rootProject.name + "-" + rootProject.buildVersion + ".jar"
+
+    delete fileTree(rootProject.targetFolder.getAbsolutePath())
+
+    destinationDirectory = rootProject.targetFolder
+    from sourceSets.getByName("main").output
+    configurations = [project.configurations.getByName("runtimeClasspath")]
+}
+
+clean {
+    delete rootProject.archiveFolder
+}

@@ -1,0 +1,18 @@
+# A list of roles that can use the command.
+# GriefPrevention: owner, member (based on claim ownership)
+# WorldGuard: owner, member (based on region ownership/membership)
+# Leave empty to allow all owners/members, or specify roles to restrict access
+required-roles:
+- owner
+- member
+
+# History limits of the inspect mode.
+# If you want to disable the feature, set the limit to -1.
+history-limit:
+  # Date limit. Limit the maximum date that can be viewed using the inspect mode.
+  date: -1
+  # Page limit. Limit the maximum amount of pages that can be viewed.
+  page: -1
+
+# Cooldown interval between checks.
+cooldown: 50
