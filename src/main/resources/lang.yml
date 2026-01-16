@@ -25,7 +25,7 @@ INSPECT_DATA_FOOTER: |-
   <white>Page {0}/{1}. View older data by typing "<dark_aqua>/inspect <page><white>".
 
 # Called when using the inspect command and lacking the permission.
-NO_PERMISSION: '<white>Unknown command. Type "/help" for help.'
+NO_PERMISSION: '<red>You do not have permission to use this command.'
 
 # Called when trying to inspect a block not inside a claim.
 NOT_INSIDE_CLAIM: '<dark_aqua>Inspector <white>- You must be inside a region or claim that you are added to.'
