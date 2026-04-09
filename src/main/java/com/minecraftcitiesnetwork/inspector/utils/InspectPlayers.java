@@ -28,7 +28,6 @@ public final class InspectPlayers {
 
     public static void setBlock(OfflinePlayer pl, Block b){
         if(inspectModePlayers.containsKey(pl.getUniqueId())) {
-            inspectModePlayers.remove(pl.getUniqueId());
             inspectModePlayers.put(pl.getUniqueId(), b);
         }
     }
@@ -49,7 +48,6 @@ public final class InspectPlayers {
     }
 
     public static void setClickMode(OfflinePlayer pl, Action action) {
-        inspectModeClickMode.remove(pl.getUniqueId());
         inspectModeClickMode.put(pl.getUniqueId(), action);
     }
 

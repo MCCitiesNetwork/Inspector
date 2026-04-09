@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'io.github.goooler.shadow' version '8.1.8'
+    id 'com.gradleup.shadow' version '8.3.10'
     id 'maven-publish'
 }
 
@@ -77,7 +77,10 @@ processResources {
 shadowJar {
     dependsOn(jar)
 
-    relocate 'org.spongepowered.configurate', 'com.minecraftcitiesnetwork.inspector.libs.org.spongepowered.configurate'
+    def packageName = "com.minecraftcitiesnetwork.inspector.libs."
+    relocate 'org.spongepowered', packageName + 'spongepowered'
+    relocate 'org.yaml', packageName + 'yaml'
+    relocate 'io.leangen.geantyref', packageName + 'geantyref'
 
     archiveFileName = rootProject.name + "-" + rootProject.buildVersion + ".jar"
 

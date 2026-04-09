@@ -40,15 +40,16 @@ public final class ClaimsProvider_WorldGuard implements ClaimsProvider {
         }
 
         UUID playerId = player.getUniqueId();
-        Set<UUID> owners = getOwners(region);
-        Set<UUID> members = getMembers(region);
+        AccessSets accessSets = buildAccessSets(region);
+        boolean isOwner = accessSets.owners.contains(playerId);
+        boolean isMember = isOwner || accessSets.members.contains(playerId);
 
         for (String role : roles) {
             String roleLower = role.toLowerCase();
-            if (roleLower.equals("owner") && owners.contains(playerId)) {
+            if (roleLower.equals("owner") && isOwner) {
                 return true;
             }
-            if (roleLower.equals("member") && (owners.contains(playerId) || members.contains(playerId))) {
+            if (roleLower.equals("member") && isMember) {
                 return true;
             }
         }
@@ -64,10 +65,8 @@ public final class ClaimsProvider_WorldGuard implements ClaimsProvider {
         }
 
         UUID playerId = player.getUniqueId();
-        Set<UUID> owners = getOwners(region);
-        Set<UUID> members = getMembers(region);
-
-        return owners.contains(playerId) || members.contains(playerId);
+        AccessSets accessSets = buildAccessSets(region);
+        return accessSets.owners.contains(playerId) || accessSets.members.contains(playerId);
     }
 
     private ProtectedRegion getRegionAt(Location location) {
@@ -83,23 +82,18 @@ public final class ClaimsProvider_WorldGuard implements ClaimsProvider {
                 .orElse(null);
     }
 
-    private Set<UUID> getOwners(ProtectedRegion region) {
+    private AccessSets buildAccessSets(ProtectedRegion region) {
         Set<UUID> ownerSet = new LinkedHashSet<>();
-        ProtectedRegion cursor = region;
-        while (cursor != null) {
-            ownerSet.addAll(cursor.getOwners().getPlayerDomain().getUniqueIds());
-            cursor = cursor.getParent();
-        }
-        return ownerSet;
-    }
-
-    private Set<UUID> getMembers(ProtectedRegion region) {
         Set<UUID> memberSet = new LinkedHashSet<>();
         ProtectedRegion cursor = region;
         while (cursor != null) {
+            ownerSet.addAll(cursor.getOwners().getPlayerDomain().getUniqueIds());
             memberSet.addAll(cursor.getMembers().getPlayerDomain().getUniqueIds());
             cursor = cursor.getParent();
         }
-        return memberSet;
+        return new AccessSets(ownerSet, memberSet);
+    }
+
+    private record AccessSets(Set<UUID> owners, Set<UUID> members) {
     }
 }

@@ -16,6 +16,7 @@ public final class SettingsHandler {
     public final int historyLimitDate;
     public final int historyLimitPage;
     public final long cooldown;
+    public final boolean debugTimings;
 
     public SettingsHandler(InspectorPlugin plugin) {
         InspectorPlugin.log("Loading configuration started...");
@@ -48,6 +49,7 @@ public final class SettingsHandler {
         historyLimitPage = historyLimitPageRaw == -1 ? Integer.MAX_VALUE : historyLimitPageRaw;
         
         cooldown = cfg.node("cooldown").getLong(5000);
+        debugTimings = cfg.node("debug", "timings").getBoolean(false);
 
         InspectorPlugin.log("Loading configuration done (Took " + (System.currentTimeMillis() - startTime) + "ms)");
     }

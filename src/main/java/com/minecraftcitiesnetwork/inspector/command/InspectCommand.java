@@ -3,7 +3,6 @@ package com.minecraftcitiesnetwork.inspector.command;
 import com.minecraftcitiesnetwork.inspector.Locale;
 import com.minecraftcitiesnetwork.inspector.InspectorPlugin;
 import com.minecraftcitiesnetwork.inspector.coreprotect.LookupType;
-import com.minecraftcitiesnetwork.inspector.hooks.ClaimsProvider;
 import com.minecraftcitiesnetwork.inspector.utils.InspectPlayers;
 import com.minecraftcitiesnetwork.inspector.utils.ItemUtils;
 import org.bukkit.block.Block;
@@ -16,7 +15,6 @@ import org.bukkit.event.block.Action;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 public final class InspectCommand implements CommandExecutor, TabCompleter {
@@ -72,19 +70,6 @@ public final class InspectCommand implements CommandExecutor, TabCompleter {
         }
 
         Block block = InspectPlayers.getBlock(player);
-        ClaimsProvider.ClaimPlugin claimPlugin = plugin.getHooksHandler().getRegionAt(player, block.getLocation());
-        
-        if (!player.hasPermission("inspector.use")) {
-            Locale.NO_PERMISSION.send(player);
-            return;
-        }
-        
-        if (!plugin.getHooksHandler().hasRole(claimPlugin, player, block.getLocation(), plugin.getSettings().requiredRoles)) {
-            String roles = plugin.getSettings().requiredRoles.stream().collect(Collectors.joining(", "));
-            Locale.REQUIRED_ROLE.send(player, roles);
-            return;
-        }
-
         Action clickMode = InspectPlayers.hasClickMode(player) ? 
                 InspectPlayers.getClickMode(player) : Action.LEFT_CLICK_BLOCK;
 

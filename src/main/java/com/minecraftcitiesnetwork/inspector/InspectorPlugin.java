@@ -38,7 +38,12 @@ public final class InspectorPlugin extends JavaPlugin {
 
         log("******** ENABLE DONE ********");
 
-        Bukkit.getScheduler().runTask(this, this::loadCoreProtect);
+        Bukkit.getScheduler().runTask(this, new Runnable() {
+            @Override
+            public void run() {
+                loadCoreProtect();
+            }
+        });
     }
 
     private void loadCoreProtect() {
@@ -68,6 +73,12 @@ public final class InspectorPlugin extends JavaPlugin {
 
     public static void log(String message) {
         plugin.getLogger().info(message);
+    }
+
+    public void debugTiming(String message) {
+        if (settingsHandler != null && settingsHandler.debugTimings) {
+            log("[TIMING] " + message);
+        }
     }
 
     public static InspectorPlugin getPlugin() {

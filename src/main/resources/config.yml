@@ -16,3 +16,8 @@ history-limit:
 
 # Cooldown interval between checks.
 cooldown: 50
+
+# Optional debugging options.
+debug:
+  # Logs per-stage lookup timings in milliseconds.
+  timings: false

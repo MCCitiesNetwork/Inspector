@@ -11,7 +11,6 @@ import org.bukkit.entity.Player;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.List;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 
@@ -19,26 +18,32 @@ public final class CoreProtect {
 
     private final InspectorPlugin plugin;
     private CoreProtectProvider coreProtectProvider;
+    private final String requiredRolesText;
 
     public CoreProtect(InspectorPlugin plugin) {
         this.plugin = plugin;
         this.coreProtectProvider = loadCoreProtectProvider();
+        this.requiredRolesText = plugin.getSettings().requiredRoles.stream().collect(Collectors.joining(", "));
     }
 
     public void performLookup(LookupType type, Player player, Block block, int page) {
-        if (!validateLookup(player, block, page)) {
+        long startedAtNs = System.nanoTime();
+        if (!validateLookup(player, block, page, startedAtNs)) {
             return;
         }
 
         BlockState blockState = block.getState();
+        long validatedAtNs = System.nanoTime();
+        plugin.debugTiming("validate lookup took " + nanosToMillis(validatedAtNs - startedAtNs) + "ms");
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () ->
-                performDatabaseLookup(type, player, block, blockState, page));
+                performDatabaseLookup(type, player, block, blockState, page, validatedAtNs));
     }
 
-    private boolean validateLookup(Player player, Block block, int page) {
+    private boolean validateLookup(Player player, Block block, int page, long startedAtNs) {
         // Check permission
         if (!player.hasPermission("inspector.use")) {
             Locale.NO_PERMISSION.send(player);
+            plugin.debugTiming("blocked by permission in " + nanosToMillis(System.nanoTime() - startedAtNs) + "ms");
             return false;
         }
 
@@ -46,13 +51,14 @@ public final class CoreProtect {
         ClaimsProvider.ClaimPlugin claimPlugin = plugin.getHooksHandler().getRegionAt(player, block.getLocation());
         if (claimPlugin == ClaimsProvider.ClaimPlugin.NONE) {
             Locale.NOT_INSIDE_CLAIM.send(player);
+            plugin.debugTiming("blocked by claim lookup in " + nanosToMillis(System.nanoTime() - startedAtNs) + "ms");
             return false;
         }
 
         // Check if player has required role
         if (!plugin.getHooksHandler().hasRole(claimPlugin, player, block.getLocation(), plugin.getSettings().requiredRoles)) {
-            String roles = plugin.getSettings().requiredRoles.stream().collect(Collectors.joining(", "));
-            Locale.REQUIRED_ROLE.send(player, roles);
+            Locale.REQUIRED_ROLE.send(player, requiredRolesText);
+            plugin.debugTiming("blocked by role check in " + nanosToMillis(System.nanoTime() - startedAtNs) + "ms");
             return false;
         }
 
@@ -60,12 +66,14 @@ public final class CoreProtect {
         if (InspectPlayers.isCooldown(player)) {
             DecimalFormat df = new DecimalFormat("0.00", DecimalFormatSymbols.getInstance(java.util.Locale.ENGLISH));
             Locale.COOLDOWN.send(player, df.format(InspectPlayers.getTimeLeft(player) / 1000.0));
+            plugin.debugTiming("blocked by cooldown in " + nanosToMillis(System.nanoTime() - startedAtNs) + "ms");
             return false;
         }
 
         // Check page limit
         if (plugin.getSettings().historyLimitPage < page) {
             Locale.LIMIT_REACH.send(player);
+            plugin.debugTiming("blocked by page limit in " + nanosToMillis(System.nanoTime() - startedAtNs) + "ms");
             return false;
         }
 
@@ -78,20 +86,38 @@ public final class CoreProtect {
         return true;
     }
 
-    private void performDatabaseLookup(LookupType type, Player player, Block block, BlockState blockState, int page) {
+    private void performDatabaseLookup(LookupType type, Player player, Block block, BlockState blockState, int page, long validatedAtNs) {
+        long queryStartedAtNs = System.nanoTime();
         CoreProtectProvider.LookupResult result = performLookup(type, player, block, blockState, page);
-        
+        long queryEndedAtNs = System.nanoTime();
+        plugin.debugTiming("coreprotect query for " + type + " took " + nanosToMillis(queryEndedAtNs - queryStartedAtNs) + "ms");
+
         if (result == null) {
             return;
         }
 
-        if (result.maxPage < page) {
-            Locale.LIMIT_REACH.send(player);
+        Bukkit.getScheduler().runTask(plugin, () -> sendLookupResult(type, player, result, page, validatedAtNs, queryEndedAtNs));
+    }
+
+    private void sendLookupResult(
+            LookupType type,
+            Player player,
+            CoreProtectProvider.LookupResult result,
+            int page,
+            long validatedAtNs,
+            long queryEndedAtNs
+    ) {
+        if (!player.isOnline()) {
             return;
         }
-
+        long sendStartedAtNs = System.nanoTime();
+        if (result.maxPage < page) {
+            Locale.LIMIT_REACH.send(player);
+            plugin.debugTiming("response blocked by max page in " + nanosToMillis(System.nanoTime() - validatedAtNs) + "ms after validation");
+            return;
+        }
         // Apply history limit
-        int displayMaxPage = plugin.getSettings().historyLimitPage > 0 ? 
+        int displayMaxPage = plugin.getSettings().historyLimitPage > 0 ?
                 Math.min(result.maxPage, plugin.getSettings().historyLimitPage) : result.maxPage;
 
         // Send formatted messages
@@ -102,6 +128,7 @@ public final class CoreProtect {
             if (noDataMsg != null) {
                 player.sendMessage(noDataMsg);
             }
+            plugin.debugTiming("no-data response sent in " + nanosToMillis(System.nanoTime() - sendStartedAtNs) + "ms");
             return;
         }
 
@@ -117,6 +144,10 @@ public final class CoreProtect {
                 player.sendMessage(footer);
             }
         }
+        long totalDurationNs = System.nanoTime() - validatedAtNs;
+        plugin.debugTiming("message send took " + nanosToMillis(System.nanoTime() - sendStartedAtNs)
+                + "ms; end-to-end lookup took " + nanosToMillis(totalDurationNs)
+                + "ms (" + nanosToMillis(queryEndedAtNs - validatedAtNs) + "ms async)");
     }
 
     private CoreProtectProvider.LookupResult performLookup(LookupType type, Player player, Block block, BlockState blockState, int page) {
@@ -135,6 +166,10 @@ public final class CoreProtect {
     private static CoreProtectProvider loadCoreProtectProvider() {
         // Direct instantiation - CoreProtect is a hard dependency
         return new CoreProtect22();
+    }
+
+    private static String nanosToMillis(long durationNs) {
+        return String.format(java.util.Locale.ENGLISH, "%.3f", durationNs / 1_000_000.0);
     }
 
 }

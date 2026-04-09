@@ -4,20 +4,31 @@ import org.bukkit.Material;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 public final class ItemUtils {
 
+    private static final Map<Material, Boolean> CONTAINER_CACHE = new EnumMap<>(Material.class);
+
     public static boolean isContainer(Material type){
-        // Check if the material is a container by trying to create a block state
-        // This is more reliable than hardcoding material names and works across all versions
         if (type == null) {
             return false;
         }
+        Boolean cached = CONTAINER_CACHE.get(type);
+        if (cached != null) {
+            return cached;
+        }
+
+        boolean isContainer;
         try {
             BlockState state = type.createBlockData().createBlockState();
-            return state instanceof Container;
+            isContainer = state instanceof Container;
         } catch (Exception e) {
-            return false;
+            isContainer = false;
         }
+        CONTAINER_CACHE.put(type, isContainer);
+        return isContainer;
     }
 
 }
